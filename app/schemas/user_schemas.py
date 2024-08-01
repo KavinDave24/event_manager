@@ -18,6 +18,14 @@ def validate_url(url: Optional[str]) -> Optional[str]:
     return url
 
 
+def validate_url(url: Optional[str]) -> Optional[str]:
+    if url is None:
+        return url
+    url_regex = r'^https?:\/\/[^\s/$.?#].[^\s]*$'
+    if not re.match(url_regex, url):
+        raise ValueError('Invalid URL format')
+    return url
+
 class UserBase(BaseModel):
     email: EmailStr = Field(..., example="john.doe@example.com")
     nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname())
@@ -27,13 +35,13 @@ class UserBase(BaseModel):
     profile_picture_url: Optional[str] = Field(None, example="https://example.com/profiles/john.jpg")
     linkedin_profile_url: Optional[str] = Field(None, example="https://linkedin.com/in/johndoe")
     github_profile_url: Optional[str] = Field(None, example="https://github.com/johndoe")
-    role: UserRole
+    role: Optional[UserRole] = Field(None, example="USER")  # Update to Optional if not required
 
-    _validate_urls = validator('profile_picture_url', 'linkedin_profile_url', 'github_profile_url', pre=True,
-                               allow_reuse=True)(validate_url)
+    _validate_urls = validator('profile_picture_url', 'linkedin_profile_url', 'github_profile_url', pre=True, always=True)(validate_url)
 
     class Config:
         from_attributes = True
+
 
 
 class UserCreate(UserBase):
