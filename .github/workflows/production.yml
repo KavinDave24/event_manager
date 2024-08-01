@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.10.12 ] # Define Python versions here
+        python-version: [ 3.10.12 ]
     services:
       postgres:
         image: postgres:latest
@@ -46,19 +46,17 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests with Pytest
-  env:
-    DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/myappdb  # Configure the DATABASE_URL environment variable for tests
-    SMTP_SERVER: sandbox.smtp.mailtrap.io
-    SMTP_PORT: 2525
-    SMTP_USERNAME: ebe11bab2d8618
-    SMTP_PASSWORD: eb7f22ade3c9c6
-  run: pytest
-
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/myappdb
+          SMTP_SERVER: sandbox.smtp.mailtrap.io
+          SMTP_PORT: 2525
+          SMTP_USERNAME: ebe11bab2d8618
+          SMTP_PASSWORD: eb7f22ade3c9c6
+        run: pytest
 
   build-and-push-docker:
     needs: test
     runs-on: ubuntu-latest
-    environment: env
     steps:
       - uses: actions/checkout@v4
 
@@ -75,8 +73,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: kavindave24/user_management:${{ github.sha }} # Uses the Git SHA for tagging
-          platforms: linux/amd64,linux/arm64 # Multi-platform support
+          tags: kavindave24/user_management:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=kavindave24/user_management:cache
           cache-to: type=inline,mode=max
 
@@ -85,6 +83,6 @@ jobs:
         with:
           image-ref: 'kavindave24/user_management:${{ github.sha }}'
           format: 'table'
-          exit-code: '1' # Fail the job if vulnerabilities are found
+          exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
