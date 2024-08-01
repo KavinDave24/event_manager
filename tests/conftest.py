@@ -14,9 +14,9 @@ Fixtures:
 """
 
 # Standard library imports
-from builtins import range
-from datetime import datetime
-from unittest.mock import patch
+from builtins import Exception, range, str
+from datetime import timedelta
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 # Third-party imports
@@ -210,54 +210,36 @@ async def manager_user(db_session: AsyncSession):
     await db_session.commit()
     return user
 
+# Configure a fixture for each type of user role you want to test
+@pytest.fixture(scope="function")
+def admin_token(admin_user):
+    # Assuming admin_user has an 'id' and 'role' attribute
+    token_data = {"sub": str(admin_user.id), "role": admin_user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
 
-# Fixtures for common test data
-@pytest.fixture
-def user_base_data():
-    return {
-        "username": "john_doe_123",
-        "email": "john.doe@example.com",
-        "full_name": "John Doe",
-        "bio": "I am a software engineer with over 5 years of experience.",
-        "profile_picture_url": "https://example.com/profile_pictures/john_doe.jpg"
-    }
+@pytest.fixture(scope="function")
+def manager_token(manager_user):
+    token_data = {"sub": str(manager_user.id), "role": manager_user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
 
-@pytest.fixture
-def user_base_data_invalid():
-    return {
-        "username": "john_doe_123",
-        "email": "john.doe.example.com",
-        "full_name": "John Doe",
-        "bio": "I am a software engineer with over 5 years of experience.",
-        "profile_picture_url": "https://example.com/profile_pictures/john_doe.jpg"
-    }
+@pytest.fixture(scope="function")
+def user_token(user):
+    token_data = {"sub": str(user.id), "role": user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
 
-
-@pytest.fixture
-def user_create_data(user_base_data):
-    return {**user_base_data, "password": "SecurePassword123!"}
+@pytest.fixture(scope="function")
+def verified_token(verified_user):
+    token_data = {"sub": str(verified_user.id), "role": verified_user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
 
 @pytest.fixture
-def user_update_data():
-    return {
-        "email": "john.doe.new@example.com",
-        "full_name": "John H. Doe",
-        "bio": "I specialize in backend development with Python and Node.js.",
-        "profile_picture_url": "https://example.com/profile_pictures/john_doe_updated.jpg"
-    }
-
-@pytest.fixture
-def user_response_data():
-    return {
-        "id": "unique-id-string",
-        "username": "testuser",
-        "email": "test@example.com",
-        "last_login_at": datetime.now(),
-        "created_at": datetime.now(),
-        "updated_at": datetime.now(),
-        "links": []
-    }
-
-@pytest.fixture
-def login_request_data():
-    return {"username": "john_doe_123", "password": "SecurePassword123!"}
+def email_service():
+    if settings.send_real_mail == 'true':
+        # Return the real email service when specifically testing email functionality
+        return EmailService()
+    else:
+        # Otherwise, use a mock to prevent actual email sending
+        mock_service = AsyncMock(spec=EmailService)
+        mock_service.send_verification_email.return_value = None
+        mock_service.send_user_email.return_value = None
+        return mock_service

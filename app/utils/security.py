@@ -7,6 +7,7 @@ from logging import getLogger
 # Set up logging
 logger = getLogger(__name__)
 
+
 def hash_password(password: str, rounds: int = 12) -> str:
     """
     Hashes a password using bcrypt with a specified cost factor.
@@ -29,6 +30,7 @@ def hash_password(password: str, rounds: int = 12) -> str:
         logger.error("Failed to hash password: %s", e)
         raise ValueError("Failed to hash password") from e
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verifies a plain text password against a hashed password.
@@ -48,6 +50,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception as e:
         logger.error("Error verifying password: %s", e)
         raise ValueError("Authentication process encountered an unexpected error") from e
+
 
 def generate_verification_token():
     return secrets.token_urlsafe(16)  # Generates a secure 16-byte URL-safe token

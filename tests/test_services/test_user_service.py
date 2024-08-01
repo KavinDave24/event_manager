@@ -22,6 +22,38 @@ async def test_create_user_with_valid_data(db_session, email_service):
     assert user.email == user_data["email"]
 
 
+async def test_create_user_with_valid_data_test6(db_session, email_service):
+    user_data = {
+        "nickname": generate_nickname(),
+        "email": "valid_user2@example.com",
+        "password": "ValidPassword123!",
+        "role": UserRole.ADMIN.name
+    }
+    user = await UserService.create(db_session, user_data, email_service)
+    assert user is not None
+    assert user.role == UserRole.ADMIN
+
+
+async def test_create_user_with_valid_data_test7(db_session, email_service):
+    user_data = {
+        "nickname": generate_nickname(),
+        "email": "valid_user3@example.com",
+        "password": "ValidPassword123!",
+        "role": UserRole.AUTHENTICATED.name
+    }
+    user_data1 = {
+        "nickname": generate_nickname(),
+        "email": "valid_user5@example.com",
+        "password": "ValidPassword123!",
+        "role": UserRole.AUTHENTICATED.name
+    }
+    user = await UserService.create(db_session, user_data, email_service)
+    user1 = await UserService.create(db_session, user_data1, email_service)
+    assert user1 is not None
+
+    assert user1.role == UserRole.ANONYMOUS
+
+
 # Test creating a user with invalid data
 async def test_create_user_with_invalid_data(db_session, email_service):
     user_data = {
@@ -178,7 +210,7 @@ async def test_verify_email_with_token(db_session, user):
     assert result is True
 
 
-# Test unlocking a user's account
+# Test unlocking a user's account.
 async def test_unlock_user_account(db_session, locked_user):
     unlocked = await UserService.unlock_user_account(db_session, locked_user.id)
     assert unlocked, "The account should be unlocked"
