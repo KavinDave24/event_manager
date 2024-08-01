@@ -38,7 +38,6 @@ from app.services.email_service import EmailService
 from app.services.jwt_service import create_access_token
 
 fake = Faker()
-
 settings = get_settings()
 TEST_DATABASE_URL = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
 engine = create_async_engine(TEST_DATABASE_URL, echo=settings.debug)
@@ -52,7 +51,6 @@ def email_service():
     template_manager = TemplateManager()
     email_service = EmailService(template_manager=template_manager)
     return email_service
-
 
 # this is what creates the http client for your api tests
 @pytest.fixture(scope="function")
@@ -90,130 +88,76 @@ async def db_session(setup_database):
         finally:
             await session.close()
 
-@pytest.fixture(scope="function")
-async def locked_user(db_session):
-    unique_email = fake.email()
+# Helper function to create a user
+async def create_user(db_session, **kwargs):
     user_data = {
         "nickname": fake.user_name(),
         "first_name": fake.first_name(),
         "last_name": fake.last_name(),
-        "email": unique_email,
+        "email": fake.email(),
         "hashed_password": hash_password("MySuperPassword$1234"),
         "role": UserRole.AUTHENTICATED,
         "email_verified": False,
-        "is_locked": True,
-        "failed_login_attempts": settings.max_login_attempts,
+        "is_locked": False,
+        **kwargs
     }
     user = User(**user_data)
     db_session.add(user)
     await db_session.commit()
     return user
+
+@pytest.fixture(scope="function")
+async def locked_user(db_session):
+    return await create_user(
+        db_session,
+        email_verified=False,
+        is_locked=True,
+        failed_login_attempts=settings.max_login_attempts
+    )
 
 @pytest.fixture(scope="function")
 async def user(db_session):
-    user_data = {
-        "nickname": fake.user_name(),
-        "first_name": fake.first_name(),
-        "last_name": fake.last_name(),
-        "email": fake.email(),
-        "hashed_password": hash_password("MySuperPassword$1234"),
-        "role": UserRole.AUTHENTICATED,
-        "email_verified": False,
-        "is_locked": False,
-    }
-    user = User(**user_data)
-    db_session.add(user)
-    await db_session.commit()
-    return user
+    return await create_user(db_session)
 
 @pytest.fixture(scope="function")
 async def verified_user(db_session):
-    user_data = {
-        "nickname": fake.user_name(),
-        "first_name": fake.first_name(),
-        "last_name": fake.last_name(),
-        "email": fake.email(),
-        "hashed_password": hash_password("MySuperPassword$1234"),
-        "role": UserRole.AUTHENTICATED,
-        "email_verified": True,
-        "is_locked": False,
-    }
-    user = User(**user_data)
-    db_session.add(user)
-    await db_session.commit()
-    return user
+    return await create_user(db_session, email_verified=True)
 
 @pytest.fixture(scope="function")
 async def unverified_user(db_session):
-    user_data = {
-        "nickname": fake.user_name(),
-        "first_name": fake.first_name(),
-        "last_name": fake.last_name(),
-        "email": fake.email(),
-        "hashed_password": hash_password("MySuperPassword$1234"),
-        "role": UserRole.AUTHENTICATED,
-        "email_verified": False,
-        "is_locked": False,
-    }
-    user = User(**user_data)
-    db_session.add(user)
-    await db_session.commit()
-    return user
+    return await create_user(db_session, email_verified=False)
 
 @pytest.fixture(scope="function")
 async def users_with_same_role_50_users(db_session):
-    users = []
-    for _ in range(50):
-        user_data = {
-            "nickname": fake.user_name(),
-            "first_name": fake.first_name(),
-            "last_name": fake.last_name(),
-            "email": fake.email(),
-            "hashed_password": fake.password(),
-            "role": UserRole.AUTHENTICATED,
-            "email_verified": False,
-            "is_locked": False,
-        }
-        user = User(**user_data)
-        db_session.add(user)
-        users.append(user)
-    await db_session.commit()
+    users = [await create_user(db_session) for _ in range(50)]
     return users
 
-@pytest.fixture
-async def admin_user(db_session: AsyncSession):
-    user = User(
+@pytest.fixture(scope="function")
+async def admin_user(db_session):
+    return await create_user(
+        db_session,
         nickname="admin_user",
         email="admin@example.com",
         first_name="John",
         last_name="Doe",
-        hashed_password="securepassword",
         role=UserRole.ADMIN,
-        is_locked=False,
+        is_locked=False
     )
-    db_session.add(user)
-    await db_session.commit()
-    return user
 
-@pytest.fixture
-async def manager_user(db_session: AsyncSession):
-    user = User(
+@pytest.fixture(scope="function")
+async def manager_user(db_session):
+    return await create_user(
+        db_session,
         nickname="manager_john",
         first_name="John",
         last_name="Doe",
         email="manager_user@example.com",
-        hashed_password="securepassword",
         role=UserRole.MANAGER,
-        is_locked=False,
+        is_locked=False
     )
-    db_session.add(user)
-    await db_session.commit()
-    return user
 
-# Configure a fixture for each type of user role you want to test
 @pytest.fixture(scope="function")
 def admin_token(admin_user):
-    # Assuming admin_user has an 'id' and 'role' attribute
     token_data = {"sub": str(admin_user.id), "role": admin_user.role.name}
     return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
 
@@ -235,23 +179,18 @@ def verified_token(verified_user):
 @pytest.fixture
 def email_service():
     if settings.send_real_mail == 'true':
-        # Return the real email service when specifically testing email functionality
         return EmailService()
     else:
-        # Otherwise, use a mock to prevent actual email sending
         mock_service = AsyncMock(spec=EmailService)
         mock_service.send_verification_email.return_value = None
         mock_service.send_user_email.return_value = None
         return mock_service
 
-    # In your test module or a common fixture module
-
-
-    @pytest.fixture
-    def user_base_data_invalid():
-        return {
-            "nickname": "testuser",
-            "email": "invalid-email",  # Invalid email format
-            "first_name": "Test",
-            "last_name": "User"
-        }
+@pytest.fixture
+def user_base_data_invalid():
+    return {
+        "nickname": "testuser",
+        "email": "invalid-email",  # Invalid email format
+        "first_name": "Test",
+        "last_name": "User"
+    }
