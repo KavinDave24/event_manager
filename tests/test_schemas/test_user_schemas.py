@@ -120,3 +120,18 @@ def test_user_base_nickname_invalid(nickname, user_base_data):
     with pytest.raises(ValidationError):
         UserBase(**user_base_data)
 
+
+@pytest.mark.parametrize("url", ["http://valid.com/profile.jpg", "https://valid.com/profile.png", None])
+def test_user_base_url_valid(url, user_base_data):
+    user_base_data["profile_picture_url"] = url
+    user_base_data["role"] = "AUTHENTICATED"  # Use a valid role based on your schema
+    user = UserBase(**user_base_data)
+    assert user.profile_picture_url == url
+
+
+def test_user_base_invalid_email(user_base_data_invalid):
+    with pytest.raises(ValidationError) as exc_info:
+        UserBase(**user_base_data_invalid)
+
+    assert "value is not a valid email address" in str(exc_info.value)
+    assert "john.doe.example.com" in str(exc_info.value)
