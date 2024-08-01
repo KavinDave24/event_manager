@@ -135,3 +135,19 @@ def test_user_base_invalid_email(user_base_data_invalid):
 
     assert "value is not a valid email address" in str(exc_info.value)
     assert "john.doe.example.com" in str(exc_info.value)
+
+
+def test_user_base_invalid_email():
+    user_base_data_invalid = {
+        'email': 'invalid-email',
+        'first_name': 'Test',
+        'last_name': 'User',
+        'nickname': 'testuser',
+        'role': 'AUTHENTICATED'  # Adding a valid role
+    }
+    with pytest.raises(ValidationError) as exc_info:
+        UserBase(**user_base_data_invalid)
+
+    assert "value is not a valid email address" in str(exc_info.value)
+    # Adjust or remove this assertion based on the actual error message
+    assert "It must have exactly one @-sign" in str(exc_info.value)
