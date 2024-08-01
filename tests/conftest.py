@@ -243,3 +243,15 @@ def email_service():
         mock_service.send_verification_email.return_value = None
         mock_service.send_user_email.return_value = None
         return mock_service
+
+    # In your test module or a common fixture module
+
+
+    @pytest.fixture
+    def user_base_data_invalid():
+        return {
+            "nickname": "testuser",
+            "email": "invalid-email",  # Invalid email format
+            "first_name": "Test",
+            "last_name": "User"
+        }
