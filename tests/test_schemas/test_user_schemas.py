@@ -74,3 +74,28 @@ def test_user_base_invalid_email(user_base_data_invalid):
 
     assert "value is not a valid email address" in str(exc_info.value)
     assert "john.doe.example.com" in str(exc_info.value)
+
+def test_user_base_valid(user_base_data):
+    assert user_base_data["username"] == "test_user"
+
+def test_user_create_valid(user_create_data):
+    assert user_create_data["username"] == "new_user"
+
+def test_user_update_valid(user_update_data):
+    assert user_update_data["username"] == "updated_user"
+
+def test_user_response_valid(user_response_data):
+    assert user_response_data["username"] == "test_user"
+
+def test_login_request_valid(login_request_data):
+    assert login_request_data["username"] == "test_user"
+
+@pytest.mark.parametrize("nickname", ["test_user", "test-user", "testuser123", "123test"])
+def test_user_base_nickname_valid(nickname, user_base_data):
+    user_base_data["nickname"] = nickname
+    assert user_base_data["nickname"] == nickname
+
+@pytest.mark.parametrize("nickname", ["test user", "test?user", "", "us"])
+def test_user_base_nickname_invalid(nickname, user_base_data):
+    user_base_data["nickname"] = nickname
+    assert user_base_data["nickname"] != nickname

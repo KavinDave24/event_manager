@@ -194,3 +194,52 @@ def user_base_data_invalid():
         "first_name": "Test",
         "last_name": "User"
     }
+@pytest.fixture
+def user_base_data():
+    return {
+        "username": "test_user",
+        "email": "test_user@example.com",
+        "nickname": "testuser",
+        "first_name": "Test",
+        "last_name": "User"
+    }
+
+@pytest.fixture
+def user_create_data():
+    return {
+        "username": "new_user",
+        "email": "new_user@example.com",
+        "password": "Password123",
+        "nickname": "newuser",
+        "first_name": "New",
+        "last_name": "User"
+    }
+
+@pytest.fixture
+def user_update_data():
+    return {
+        "username": "updated_user",
+        "email": "updated_user@example.com",
+        "nickname": "updateduser",
+        "first_name": "Updated",
+        "last_name": "User"
+    }
+
+@pytest.fixture
+def user_response_data():
+    return {
+        "id": 1,
+        "username": "test_user",
+        "email": "test_user@example.com",
+        "nickname": "testuser",
+        "first_name": "Test",
+        "last_name": "User",
+        "is_active": True
+    }
+
+@pytest.fixture
+def login_request_data():
+    return {
+        "username": "test_user",
+        "password": "Password123"
+    }
