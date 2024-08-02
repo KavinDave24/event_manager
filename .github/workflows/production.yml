@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+\name: CI/CD Pipeline
 
 on:
   push:
@@ -68,11 +68,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          ecr: auto
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           logout: true
-
-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
